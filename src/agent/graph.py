@@ -380,13 +380,30 @@ def post_social_media_node(state: AgentState) -> dict:
             connected_account_id="ca_ztimDVH28syB",
         )
 
+        # Composio response structure: {"data": {...}, "successful": bool, "error": null}
+        logger.info("Facebook response: %s", facebook_response)
+        
+        # Check if post was successful
+        if not facebook_response.get("successful", False):
+            error_msg = facebook_response.get("error", "Unknown error")
+            logger.error("Facebook post failed: %s", error_msg)
+            results["facebook_status"] = f"Failed: {error_msg}"
+            results["facebook_post_id"] = ""
+            return results
+        
+        # Extract data from Composio response
+        # Structure: {"data": {"response_data": {"id": "...", "post_id": "..."}}}
         facebook_data = facebook_response.get("data", {})
-        facebook_post_id = facebook_data.get("id", "")
-        results["facebook_status"] = f"Posted: {facebook_post_id}"
-        results["facebook_post_id"] = facebook_post_id
+        response_data = facebook_data.get("response_data", {})
+        
+        # Use post_id (full format: PAGE_ID_POST_ID) for commenting
+        facebook_post_id = response_data.get("post_id", "")
+        
         logger.info("Facebook posted successfully!")
         logger.info("Post ID: %s", facebook_post_id)
-        logger.info("Response: %s", facebook_data)
+        
+        results["facebook_status"] = f"Posted: {facebook_post_id}"
+        results["facebook_post_id"] = facebook_post_id
     except Exception as e:
         logger.exception("Facebook posting failed: %s", e)
         results["facebook_status"] = f"Failed: {e!s}"
