@@ -57,9 +57,12 @@ async def run_agent_task() -> dict:
             "last_run": datetime.now().isoformat(),
             "status": "Success",
             "results": {
-                "tweet": result.get("tweet_text", "N/A")[:100],
+                "tweet": result.get("tweet_text", "N/A"),
+                "linkedin": result.get("linkedin_text", "N/A"),
+                "image": result.get("image_url", ""),
                 "twitter": "Posted" if "twitter_url" in result else "Failed",
                 "facebook": "Posted" if "facebook_post_id" in result else "Failed",
+                "linkedin_status": result.get("linkedin_status", "N/A"),
                 "comment": result.get("comment_status", "N/A")
             }
         }

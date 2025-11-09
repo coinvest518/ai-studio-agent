@@ -19,7 +19,7 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            max-width: 600px;
+            max-width: 1000px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
@@ -78,22 +78,50 @@
         }
         .results {
             margin-top: 20px;
-            padding: 15px;
+            padding: 20px;
             background: #f0fdf4;
-            border-radius: 8px;
+            border-radius: 12px;
             border-left: 4px solid #10b981;
             display: none;
         }
         .results.show { display: block; }
         .results h3 {
             color: #065f46;
-            margin-bottom: 10px;
-            font-size: 16px;
+            margin-bottom: 15px;
+            font-size: 18px;
         }
         .result-item {
-            padding: 8px 0;
+            padding: 12px 0;
             font-size: 14px;
             color: #064e3b;
+            border-bottom: 1px solid #d1fae5;
+        }
+        .result-item:last-child { border-bottom: none; }
+        .result-label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .result-value {
+            color: #047857;
+            word-wrap: break-word;
+        }
+        .post-image {
+            width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .post-text {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.6;
+            max-height: none;
+            overflow: visible;
         }
         .loading {
             display: none;
@@ -119,7 +147,7 @@
 <body>
     <div class="container">
         <h1>🚀 FDWA Social Media Agent</h1>
-        <p class="subtitle">Autonomous posting to Twitter & Facebook</p>
+        <p class="subtitle">Autonomous posting to Twitter, Facebook & LinkedIn</p>
         
         <div class="status-card">
             <div class="status-row">
@@ -147,10 +175,36 @@
 
         <div class="results" id="results">
             <h3>✅ Last Run Results</h3>
-            <div class="result-item">📝 Tweet: <span id="tweet">-</span></div>
-            <div class="result-item">🐦 Twitter: <span id="twitter">-</span></div>
-            <div class="result-item">📘 Facebook: <span id="facebook">-</span></div>
-            <div class="result-item">💬 Comment: <span id="comment">-</span></div>
+            
+            <div class="result-item">
+                <span class="result-label">🖼️ Generated Image:</span>
+                <img id="image" class="post-image" style="display:none;" />
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">🐦 Twitter Post:</span>
+                <div class="post-text" id="tweet">-</div>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">📘 Facebook Post:</span>
+                <div class="post-text" id="facebookPost">-</div>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">💼 LinkedIn Post:</span>
+                <div class="post-text" id="linkedin">-</div>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">📊 Platform Status:</span>
+                <div class="result-value">
+                    🐦 Twitter: <span id="twitter">-</span><br>
+                    📘 Facebook: <span id="facebook">-</span><br>
+                    💼 LinkedIn: <span id="linkedinStatus">-</span><br>
+                    💬 Comment: <span id="comment">-</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -171,9 +225,23 @@
                 
                 if (data.results && Object.keys(data.results).length > 0) {
                     document.getElementById('results').classList.add('show');
+                    
+                    // Show image
+                    if (data.results.image) {
+                        const img = document.getElementById('image');
+                        img.src = data.results.image;
+                        img.style.display = 'block';
+                    }
+                    
+                    // Show posts (Facebook uses same text as Twitter)
                     document.getElementById('tweet').textContent = data.results.tweet || '-';
+                    document.getElementById('facebookPost').textContent = data.results.tweet || '-';
+                    document.getElementById('linkedin').textContent = data.results.linkedin || '-';
+                    
+                    // Show statuses
                     document.getElementById('twitter').textContent = data.results.twitter || '-';
                     document.getElementById('facebook').textContent = data.results.facebook || '-';
+                    document.getElementById('linkedinStatus').textContent = data.results.linkedin_status || '-';
                     document.getElementById('comment').textContent = data.results.comment || '-';
                 }
             } catch (e) {

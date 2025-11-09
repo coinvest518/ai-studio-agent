@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAI
 from langsmith import traceable
 from langgraph.graph import StateGraph
+from src.agent.linkedin_agent import convert_to_linkedin_post
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,22 +38,26 @@ class AgentState(TypedDict):
         trend_data: Raw trend data from SERP API.
         insight: Extracted insight aligned with FDWA brand.
         tweet_text: The generated tweet text.
+        linkedin_text: The LinkedIn post text.
         image_url: The URL of the generated image.
         image_path: The local path of the generated image.
         twitter_url: The URL of the created Twitter post.
         facebook_status: The status of the Facebook post.
         facebook_post_id: The ID of the Facebook post.
+        linkedin_status: The status of the LinkedIn post.
         comment_status: The status of the Facebook comment.
         error: To capture any errors that might occur.
     """
     trend_data: str
     insight: str
     tweet_text: str
+    linkedin_text: str
     image_url: str
     image_path: str
     twitter_url: str
     facebook_status: str
     facebook_post_id: str
+    linkedin_status: str
     comment_status: str
     error: str
 
@@ -124,13 +129,13 @@ def research_trends_node(state: AgentState) -> dict:
     """
     logger.info("---RESEARCHING TRENDS---")
 
-    # Define search queries for FDWA-relevant topics
+    # FWDA-specific search queries for SMB AI automation trends
     search_queries = [
-        "AI automation business",
-        "small business growth systems",
-        "future of work automation",
-        "digital wealth creation",
-        "business automation",
+        "AI automation for small business 2025",
+        "AI workflows for service businesses",
+        "AI business systems 2025",
+        "AI agents replacing administrative work",
+        "SMB productivity automation statistics",
     ]
 
     query = random.choice(search_queries)
@@ -176,27 +181,40 @@ def generate_tweet_node(state: AgentState) -> dict:
         google_api_key=os.getenv("GOOGLE_AI_API_KEY")
     )
 
-    # Enhanced FDWA master prompt
+    # FWDA Marketing Intelligence prompt
     prompt = f"""
-You are the FDWA Autonomous Social Media Agent. Your voice is strategic, confident, and culturally aware. Write for entrepreneurs, creators, and founders building systems, not just hustling.
+You are the Marketing Intelligence & Content Strategy AI Agent for FWDA AI Automation Agency.
 
-TRENDING DATA:
+BRAND POSITIONING:
+FWDA builds custom AI automation workflows, systems, and client pipelines that reduce workload and increase revenue capacity for small and medium-sized service businesses.
+
+TARGET AUDIENCE:
+Small/medium service businesses (coaches, agencies, consultants, trades, wellness, beauty, fitness, local businesses) struggling with manual workflows, inconsistent leads, operational overwhelm, repetitive tasks.
+
+TRENDING DATA (last 90 days):
 {trend_data[:2000]}
 
 TASK:
-From the trend data above, extract ONE insight that aligns with FDWA brand positioning: "We automate your business so your business can run itself."
+Extract 2-3 concrete insights (adoption rates, cost savings, productivity improvements, SMB tech urgency) and create a social post.
 
-Create ONE tweet under 275 characters (all characters count, including emojis and hashtags).
+SOCIAL POST REQUIREMENTS (100-150 words):
+- Hook: Start with compelling trend/statistic
+- Problem: State what SMBs face
+- Solution: How FWDA solves it (AI Agents, Workflow Automation, System Integration)
+- Benefits: Tangible results (time restored, better leads, reduced costs, more capacity)
+- CTA: Direct call to action
+- Tone: Direct, confident, helpful (not corporate)
+- Max 3 emojis
+- Include: https://fwda.site or https://cal.com/bookme-daniel/ai-consultation-smb
+- 5-8 hashtags: #AIAutomation #SmallBusiness #BusinessGrowth #Productivity #AIAgents
 
-TWEET REQUIREMENTS:
-- Tone: Futuristic, grounded, empowering (not hype, not corporate)
-- Include 2 to 3 emojis max
-- Include EXACTLY 5 hashtags: mix of trending + evergreen
-- No bullet points, no lists, no quotes, no markdown
-- CTA must be subtle and conversational (ex: "Your thoughts?" / "Let's build smarter." / "Tap in if you're ready.")
+QUALITY RULES:
+- No generic clichés
+- Benefits must be measurable
+- Active voice
+- Clarity over complexity
 
-OUTPUT FORMAT:
-Return ONLY the final tweet text. No explanations. No commentary. No JSON. No hashtags list outside the tweet.
+Return ONLY the social post text. No explanations.
 """
 
     try:
@@ -296,6 +314,79 @@ def comment_on_facebook_node(state: AgentState) -> dict:
     except Exception as e:
         logger.exception("Facebook comment failed: %s", e)
         return {"comment_status": f"Failed: {e!s}"}
+
+
+def post_linkedin_node(state: AgentState) -> dict:
+    """Post to LinkedIn using converted text.
+
+    Args:
+        state: Current agent state with linkedin_text and image_url.
+
+    Returns:
+        Dictionary with linkedin_status.
+    """
+    logger.info("---POSTING TO LINKEDIN---")
+    tweet_text = state.get("tweet_text", "")
+    image_url = state.get("image_url")
+
+    if not tweet_text:
+        return {"linkedin_status": "Skipped: No content"}
+
+    # Convert tweet to LinkedIn post
+    linkedin_text = convert_to_linkedin_post(tweet_text)
+    logger.info("LinkedIn post: %s", linkedin_text[:100])
+
+    try:
+        # Get user info to retrieve author URN
+        logger.info("Fetching LinkedIn user info...")
+        user_info = composio_client.tools.execute(
+            "LINKEDIN_GET_MY_INFO",
+            {},
+            connected_account_id=os.getenv("LINKEDIN_ACCOUNT_ID"),
+        )
+        
+        logger.info("LinkedIn user info response: %s", user_info)
+        
+        # Parse response: data.response_dict.sub contains the person ID
+        data = user_info.get("data", {})
+        response_dict = data.get("response_dict", {})
+        person_id = response_dict.get("sub", "")
+        
+        # Convert to URN format
+        author_urn = f"urn:li:person:{person_id}" if person_id else ""
+        
+        logger.info("Person ID: %s", person_id)
+        logger.info("Author URN: %s", author_urn)
+        
+        if not author_urn:
+            logger.error("Failed to get author URN from response")
+            return {"linkedin_status": "Failed: No author URN", "linkedin_text": linkedin_text}
+
+        linkedin_params = {
+            "author": author_urn,
+            "commentary": linkedin_text,
+            "visibility": "PUBLIC"
+        }
+
+        linkedin_response = composio_client.tools.execute(
+            "LINKEDIN_CREATE_LINKED_IN_POST",
+            linkedin_params,
+            connected_account_id=os.getenv("LINKEDIN_ACCOUNT_ID"),
+        )
+
+        logger.info("LinkedIn response: %s", linkedin_response)
+        
+        if linkedin_response.get("successful", False):
+            logger.info("LinkedIn posted successfully!")
+            return {"linkedin_status": "Posted", "linkedin_text": linkedin_text}
+        else:
+            error_msg = linkedin_response.get("error", "Unknown error")
+            logger.error("LinkedIn post failed: %s", error_msg)
+            return {"linkedin_status": f"Failed: {error_msg}", "linkedin_text": linkedin_text}
+
+    except Exception as e:
+        logger.exception("LinkedIn posting failed: %s", e)
+        return {"linkedin_status": f"Failed: {e!s}", "linkedin_text": linkedin_text}
 
 
 def post_social_media_node(state: AgentState) -> dict:
@@ -419,6 +510,7 @@ workflow.add_node("research_trends", research_trends_node)
 workflow.add_node("generate_content", generate_tweet_node)
 workflow.add_node("generate_image", generate_image_node)
 workflow.add_node("post_social_media", post_social_media_node)
+workflow.add_node("post_linkedin", post_linkedin_node)
 workflow.add_node("comment_on_facebook", comment_on_facebook_node)
 
 # Set the entrypoint
@@ -428,7 +520,8 @@ workflow.set_entry_point("research_trends")
 workflow.add_edge("research_trends", "generate_content")
 workflow.add_edge("generate_content", "generate_image")
 workflow.add_edge("generate_image", "post_social_media")
-workflow.add_edge("post_social_media", "comment_on_facebook")
+workflow.add_edge("post_social_media", "post_linkedin")
+workflow.add_edge("post_linkedin", "comment_on_facebook")
 workflow.add_edge("comment_on_facebook", "__end__")
 
 # Compile the graph
@@ -451,6 +544,7 @@ if __name__ == "__main__":
         logger.info("Image: %s", final_state.get("image_url", "N/A"))
         logger.info("Twitter: %s", final_state.get("twitter_url", "N/A"))
         logger.info("Facebook: %s", final_state.get("facebook_status", "N/A"))
+        logger.info("LinkedIn: %s", final_state.get("linkedin_status", "N/A"))
         logger.info("Comment: %s", final_state.get("comment_status", "N/A"))
 
         if final_state.get("error"):
