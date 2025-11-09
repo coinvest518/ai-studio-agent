@@ -8,7 +8,7 @@ from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from agent.graph import graph
+from src.agent.graph import graph
 
 logger = logging.getLogger(__name__)
 
