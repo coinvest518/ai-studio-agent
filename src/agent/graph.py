@@ -534,35 +534,14 @@ def post_linkedin_node(state: AgentState) -> dict:
     logger.info("LinkedIn post: %s", linkedin_text[:100])
 
     try:
-        # Get user info to retrieve author URN
-        logger.info("Fetching LinkedIn user info...")
-        user_info = composio_client.tools.execute(
-            "LINKEDIN_GET_MY_INFO",
-            {},
-            connected_account_id=os.getenv("LINKEDIN_ACCOUNT_ID"),
-        )
-        
-        logger.info("LinkedIn user info response: %s", user_info)
-        
-        # Parse response: data.response_dict.sub contains the person ID
-        data = user_info.get("data", {})
-        response_dict = data.get("response_dict", {})
-        person_id = response_dict.get("sub", "")
-        
-        # Convert to URN format
-        author_urn = f"urn:li:person:{person_id}" if person_id else ""
-        
-        logger.info("Person ID: %s", person_id)
-        logger.info("Author URN: %s", author_urn)
+        # Use author URN directly from env to avoid rate limits
+        author_urn = os.getenv("LINKEDIN_AUTHOR_URN", "")
         
         if not author_urn:
-            # Fallback to env variable
-            author_urn = os.getenv("LINKEDIN_AUTHOR_URN", "")
-            logger.warning("Using fallback author URN from env: %s", author_urn)
-            
-            if not author_urn:
-                logger.error("Failed to get author URN from response and no fallback in env")
-                return {"linkedin_status": "Failed: No author URN", "linkedin_text": linkedin_text}
+            logger.error("LINKEDIN_AUTHOR_URN not set in environment")
+            return {"linkedin_status": "Failed: No author URN in env", "linkedin_text": linkedin_text}
+        
+        logger.info("Using author URN from env: %s", author_urn)
 
         linkedin_params = {
             "author": author_urn,
