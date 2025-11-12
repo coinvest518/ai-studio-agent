@@ -1,10 +1,15 @@
 """FastAPI application for running the FDWA agent."""
 
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from langserve import add_routes
+
+# Load environment variables FIRST before importing graph
+load_dotenv()
 
 from src.agent.graph import graph
 from src.agent.scheduler import start_scheduler, get_status, run_agent_task

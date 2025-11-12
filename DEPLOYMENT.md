@@ -36,6 +36,10 @@ LANGSMITH_PROJECT=fdwa-multi-agent
 LANGSMITH_WORKSPACE_ID=your_workspace_id_here
 FACEBOOK_ACCOUNT_ID=your_facebook_account_id
 FACEBOOK_PAGE_ID=your_facebook_page_id
+LINKEDIN_ACCOUNT_ID=your_linkedin_account_id
+LINKEDIN_AUTHOR_URN=your_linkedin_author_urn
+INSTAGRAM_ACCOUNT_ID=your_instagram_account_id
+INSTAGRAM_USER_ID=your_instagram_user_id
 PORT=8000
 ```
 

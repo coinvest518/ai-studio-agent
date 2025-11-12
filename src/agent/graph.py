@@ -537,12 +537,17 @@ def post_linkedin_node(state: AgentState) -> dict:
         linkedin_account_id = os.getenv("LINKEDIN_ACCOUNT_ID")
         author_urn = os.getenv("LINKEDIN_AUTHOR_URN")
         
+        logger.info("LinkedIn Account ID from env: %s", linkedin_account_id)
+        logger.info("LinkedIn Author URN from env: %s", author_urn)
+        
         if not linkedin_account_id:
             logger.error("LINKEDIN_ACCOUNT_ID not set in environment")
+            logger.error("Available env vars: %s", list(os.environ.keys()))
             return {"linkedin_status": "Failed: No account ID", "linkedin_text": linkedin_text}
         
         if not author_urn:
             logger.error("LINKEDIN_AUTHOR_URN not set in environment")
+            logger.error("Available env vars: %s", list(os.environ.keys()))
             return {"linkedin_status": "Failed: No author URN", "linkedin_text": linkedin_text}
         
         logger.info("Using author URN from environment: %s", author_urn)
