@@ -1,7 +1,7 @@
 """FDWA Autonomous Twitter AI Agent.
 
 This graph defines a three-step autonomous process:
-1. Research trending topics using SERP API
+1. Research trending topics using SERPAPI (primary) with Tavily fallback
 2. Generate strategic FDWA-branded tweet using Google AI
 3. Post the tweet to Twitter using Composio
 """
@@ -13,6 +13,8 @@ import os
 import random
 import re
 import time
+import requests
+from pathlib import Path
 from typing import TypedDict
 
 from composio import Composio
@@ -28,7 +30,11 @@ from src.agent.instagram_comment_agent import generate_instagram_reply
 load_dotenv()
 
 # Initialize Composio client
-composio_client = Composio(api_key=os.getenv("COMPOSIO_API_KEY"))
+composio_client = Composio(
+    api_key=os.getenv("COMPOSIO_API_KEY"),
+    # Set to allow manual-style execution like the test file
+    entity_id="default"
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -37,7 +43,7 @@ class AgentState(TypedDict):
     """Represents the state of our autonomous agent.
 
     Attributes:
-        trend_data: Raw trend data from SERP API.
+        trend_data: Raw trend data from SERPAPI or Tavily search.
         insight: Extracted insight aligned with FDWA brand.
         tweet_text: The generated tweet text.
         linkedin_text: The LinkedIn post text.
@@ -70,6 +76,38 @@ class AgentState(TypedDict):
     error: str
 
 
+def _download_image_from_url(image_url: str) -> str:
+    """Download image from URL and save locally.
+    
+    Args:
+        image_url: URL of the image to download.
+        
+    Returns:
+        Local file path of downloaded image.
+    """
+    try:
+        response = requests.get(image_url, timeout=30)
+        response.raise_for_status()
+        
+        # Create temp directory if it doesn't exist
+        temp_dir = Path("temp_images")
+        temp_dir.mkdir(exist_ok=True)
+        
+        # Extract filename from URL or generate one
+        filename = image_url.split("/")[-1] or "image.jpg"
+        if not filename.endswith((".jpg", ".jpeg", ".png")):
+            filename += ".jpg"
+        
+        local_path = temp_dir / filename
+        local_path.write_bytes(response.content)
+        
+        logger.info("Downloaded image to: %s", local_path)
+        return str(local_path)
+    except Exception as e:
+        logger.exception("Failed to download image: %s", e)
+        return None
+
+
 @traceable(name="enhance_image_prompt")
 def _enhance_prompt_for_image(text: str) -> str:
     """Convert social media text into a clean visual prompt for image generation.
@@ -78,7 +116,7 @@ def _enhance_prompt_for_image(text: str) -> str:
         text: Social media post text with hashtags and formatting.
 
     Returns:
-        Clean, descriptive image prompt optimized for Pollinations AI.
+        Clean, descriptive image prompt optimized for Google Gemini AI image generation.
     """
     logger.info("Enhancing image prompt...")
 
@@ -127,7 +165,7 @@ Return ONLY the clean image prompt. No explanations.
 
 
 def research_trends_node(state: AgentState) -> dict:
-    """Research trending topics using multiple SERP API tools.
+    """Research trending topics using SERPAPI with Tavily fallback.
 
     Args:
         state: Current agent state.
@@ -152,20 +190,47 @@ def research_trends_node(state: AgentState) -> dict:
     trend_data = ""
 
     try:
-        # Execute SERP API search
-        logger.info("Fetching search results...")
-        search_response = composio_client.tools.execute(
-            "SERPAPI_SEARCH",
-            {"query": query},
-            connected_account_id="ca_ibP542LgfMdi",
-        )
-        trend_data = f"SEARCH: {search_response.get('data', {})!s}"
-
-        logger.info("Trend data collected: %d characters", len(trend_data))
-        return {"trend_data": trend_data}
+        # Primary: Try SERPAPI search first
+        logger.info("Fetching search results with SERPAPI...")
+        try:
+            search_response = composio_client.tools.execute(
+                "SERPAPI_SEARCH",
+                {"query": query},
+                connected_account_id=os.getenv("SERPAPI_ACCOUNT_ID")
+            )
+            trend_data = f"SERPAPI_SEARCH: {search_response.get('data', {})!s}"
+            logger.info("SERPAPI search successful: %d characters", len(trend_data))
+            return {"trend_data": trend_data}
+            
+        except Exception as serpapi_error:
+            logger.warning("SERPAPI search failed: %s", serpapi_error)
+            
+            # Fallback: Try Tavily search
+            logger.info("Falling back to Tavily search...")
+            search_response = composio_client.tools.execute(
+                "TAVILY_SEARCH",
+                {
+                    "query": query,
+                    "max_results": 10,
+                    "search_depth": "advanced",
+                    "include_answer": True,
+                    "include_raw_content": True,
+                    "exclude_domains": [
+                        "pinterest.com",
+                        "facebook.com", 
+                        "instagram.com",
+                        "twitter.com",
+                        "tiktok.com"
+                    ]
+                },
+                connected_account_id=os.getenv("TAVILY_ACCOUNT_ID")
+            )
+            trend_data = f"TAVILY_SEARCH: {search_response.get('data', {})!s}"
+            logger.info("Tavily fallback successful: %d characters", len(trend_data))
+            return {"trend_data": trend_data}
 
     except Exception as e:
-        logger.exception("Error researching trends: %s", e)
+        logger.exception("Both search methods failed: %s", e)
         return {"error": str(e), "trend_data": "No trend data available"}
 
 
@@ -243,7 +308,7 @@ Return ONLY the Twitter post text. No explanations. No extra content.
 
 
 def generate_image_node(state: AgentState) -> dict:
-    """Generate and download an image using Pollinations API based on the tweet text.
+    """Generate an image using Google Gemini via Composio based on the tweet text.
 
     Args:
         state: Current agent state with tweet_text.
@@ -251,7 +316,7 @@ def generate_image_node(state: AgentState) -> dict:
     Returns:
         Dictionary with image_url or error.
     """
-    logger.info("---GENERATING IMAGE---")
+    logger.info("---GENERATING IMAGE WITH GEMINI---")
     tweet_text = state.get("tweet_text", "")
 
     if not tweet_text:
@@ -260,23 +325,69 @@ def generate_image_node(state: AgentState) -> dict:
     # Use sub-agent to enhance prompt
     visual_prompt = _enhance_prompt_for_image(tweet_text)
     
-    # Pollinations API configuration
-    width = 1024
-    height = 1024
-    random_seed = random.randint(1, 100000)
-    model = "flux"
-    enhance = "true"
-    nologo = "true"
+    logger.info("Enhanced visual prompt: %s", visual_prompt)
     
-    # URL encode the clean prompt
-    encoded_prompt = visual_prompt.replace(" ", "%20")
-    
-    # Build Pollinations image URL
-    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&seed={random_seed}&model={model}&enhance={enhance}&nologo={nologo}"
-
-    logger.info("Image URL: %s", image_url)
-
-    return {"image_url": image_url}
+    try:
+        # Use Gemini image generation via Composio (toolkit_version is invalid parameter)
+        image_response = composio_client.tools.execute(
+            "GEMINI_GENERATE_IMAGE",
+            {
+                "prompt": visual_prompt,
+                "model": "gemini-2.5-flash-image-preview",
+                "temperature": 0.7,
+                "system_instruction": "Generate a professional, modern business image that aligns with AI automation and small business themes. Style should be clean, futuristic, and engaging for social media."
+            }
+        )
+        
+        logger.info("Gemini image response: %s", image_response)
+        logger.info("Gemini response data structure: %s", image_response.get("data", {}))
+        
+        if image_response.get("successful", False):
+            # Extract S3 URL from Gemini MCP content array (using working test logic)
+            image_data = image_response.get("data", {})
+            content_array = image_data.get("content", [])
+            
+            image_url = None
+            
+            # Look for image in content array (matching test file logic)
+            for content_block in content_array:
+                if isinstance(content_block, dict):
+                    if content_block.get("type") == "image":
+                        if "source" in content_block and "media_type" in content_block["source"]:
+                            # Direct S3 URL in source
+                            source_data = content_block["source"].get("data", "")
+                            if source_data.startswith("https://"):
+                                image_url = source_data
+                                break
+                    elif content_block.get("type") == "text":
+                        # Check if text content contains S3 URL
+                        text_content = content_block.get("text", "")
+                        if text_content.startswith("https://") and "r2.dev" in text_content:
+                            image_url = text_content
+                            break
+                    elif "image_url" in content_block:
+                        # Alternative format
+                        image_url = content_block["image_url"]
+                        break
+            
+            # Fallback: try direct extraction from data
+            if not image_url:
+                image_url = image_data.get("image_url") or image_data.get("url") or image_data.get("s3_url")
+            
+            if image_url:
+                logger.info("Generated image URL: %s", image_url)
+                return {"image_url": image_url}
+            else:
+                logger.error("No image URL found in Gemini response. Data structure: %s", image_data)
+                return {"error": "No image URL returned from Gemini"}
+        else:
+            error_msg = image_response.get("error", "Unknown Gemini error")
+            logger.error("Gemini image generation failed: %s", error_msg)
+            return {"error": f"Gemini generation failed: {error_msg}"}
+            
+    except Exception as e:
+        logger.exception("Error generating image with Gemini: %s", e)
+        return {"error": f"Image generation error: {e!s}"}
 
 
 def monitor_instagram_comments_node(state: AgentState) -> dict:
@@ -379,7 +490,7 @@ def reply_to_twitter_node(state: AgentState) -> dict:
                 "text": reply_message,
                 "reply_in_reply_to_tweet_id": twitter_post_id
             },
-            connected_account_id="ca_tu9cBVOMM94b",
+            connected_account_id=os.getenv("TWITTER_ACCOUNT_ID"),
         )
 
         reply_data = reply_response.get("data", {})
@@ -476,7 +587,7 @@ def post_instagram_node(state: AgentState) -> dict:
         container_response = composio_client.tools.execute(
             "INSTAGRAM_CREATE_MEDIA_CONTAINER",
             container_params,
-            connected_account_id=os.getenv("INSTAGRAM_ACCOUNT_ID"),
+            connected_account_id=os.getenv("INSTAGRAM_ACCOUNT_ID")
         )
 
         logger.info("Instagram container response: %s", container_response)
@@ -492,7 +603,7 @@ def post_instagram_node(state: AgentState) -> dict:
             publish_response = composio_client.tools.execute(
                 "INSTAGRAM_CREATE_POST",
                 {"ig_user_id": ig_user_id, "creation_id": container_id},
-                connected_account_id=os.getenv("INSTAGRAM_ACCOUNT_ID"),
+                connected_account_id=os.getenv("INSTAGRAM_ACCOUNT_ID")
             )
             
             if publish_response.get("successful", False):
@@ -546,11 +657,13 @@ def post_linkedin_node(state: AgentState) -> dict:
             "commentary": linkedin_text,
             "visibility": "PUBLIC"
         }
+        
+        # Note: LinkedIn text posts only - image support requires different API endpoints
 
         linkedin_response = composio_client.tools.execute(
             "LINKEDIN_CREATE_LINKED_IN_POST",
             linkedin_params,
-            connected_account_id=linkedin_account_id,
+            connected_account_id=os.getenv("LINKEDIN_ACCOUNT_ID")
         )
 
         logger.info("LinkedIn response: %s", linkedin_response)
@@ -603,14 +716,52 @@ def post_social_media_node(state: AgentState) -> dict:
 
     results = {}
 
-    # Post to Twitter
+    # Post to Twitter with image support
     logger.info("Posting to Twitter: %s", twitter_text)
     try:
+        twitter_params = {"text": twitter_text}
+        
+        # Step 1: Upload media if image is available
+        if image_url:
+            logger.info("Uploading image to Twitter: %s", image_url)
+            try:
+                # Download image locally first
+                local_image_path = _download_image_from_url(image_url)
+                
+                if local_image_path:
+                    media_upload_response = composio_client.tools.execute(
+                        "TWITTER_UPLOAD_MEDIA",
+                        {"media": local_image_path},
+                        connected_account_id=os.getenv("TWITTER_ACCOUNT_ID")
+                    )
+                    
+                    logger.info("Twitter media upload response: %s", media_upload_response)
+                    
+                    if media_upload_response.get("successful", False):
+                        # Extract media ID from response (it's in data.id, not data.media_id_string)
+                        media_data = media_upload_response.get("data", {})
+                        media_id = media_data.get("id") or media_data.get("media_id_string") or media_data.get("media_key")
+                        if media_id:
+                            twitter_params["media_media_ids"] = [media_id]
+                            logger.info("Twitter media uploaded successfully, ID: %s", media_id)
+                        else:
+                            logger.warning("No media ID returned from Twitter upload")
+                    else:
+                        logger.error("Twitter media upload failed: %s", media_upload_response.get("error"))
+                else:
+                    logger.error("Failed to download image from URL")
+                    
+            except Exception as media_e:
+                logger.exception("Twitter media upload error: %s", media_e)
+                # Continue with text-only post if media upload fails
+        
+        # Step 2: Create the post (with or without media)
         twitter_response = composio_client.tools.execute(
             "TWITTER_CREATION_OF_A_POST",
-            {"text": twitter_text},
-            connected_account_id="ca_tu9cBVOMM94b",
+            twitter_params,
+            connected_account_id=os.getenv("TWITTER_ACCOUNT_ID")
         )
+        
         twitter_data = twitter_response.get("data", {})
         twitter_id = twitter_data.get("id", "unknown")
         twitter_url = (
@@ -639,17 +790,24 @@ def post_social_media_node(state: AgentState) -> dict:
             "published": True,
         }
 
-        # Add photo URL (Pollinations URL is publicly accessible)
-        if image_url:
-            facebook_params["url"] = image_url
-            logger.info("Image URL attached: %s", image_url)
+        # Add photo by downloading from URL first
+        if image_url and image_url.strip() and image_url.startswith("https://"):
+            local_image_path = _download_image_from_url(image_url)
+            if local_image_path:
+                facebook_params["photo"] = local_image_path
+                logger.info("Facebook photo attached using local path: %s", local_image_path)
+                facebook_tool = "FACEBOOK_CREATE_PHOTO_POST"
+            else:
+                logger.error("Failed to download image from URL: %s", image_url)
+                facebook_tool = "FACEBOOK_CREATE_POST"
         else:
-            logger.info("No image URL available")
+            logger.info("No valid image URL available, posting text-only to Facebook")
+            facebook_tool = "FACEBOOK_CREATE_POST"
 
         facebook_response = composio_client.tools.execute(
-            "FACEBOOK_CREATE_PHOTO_POST",
+            facebook_tool,
             facebook_params,
-            connected_account_id="ca_ztimDVH28syB",
+            connected_account_id="ca_ztimDVH28syB"
         )
 
         # Composio response structure: {"data": {...}, "successful": bool, "error": null}

@@ -4,9 +4,9 @@ Autonomous AI agent that researches trends, generates content, creates images, a
 
 ## Features
 
-- 🔍 **Research Agent** - Automated trend research using SERP API
+- 🔍 **Research Agent** - Automated trend research using Tavily
 - ✍️ **Content Agent** - AI-powered social media content generation
-- 🎨 **Image Agent** - AI image generation with Pollinations API
+- 🎨 **Image Agent** - AI image generation with Google Gemini via Composio
 - 📱 **Social Media Agent** - Multi-platform posting (Twitter + Facebook)
 - 📊 **LangSmith Tracing** - Complete observability and monitoring
 
@@ -17,10 +17,10 @@ Research → Content Generation → Image Enhancement → Image Generation → S
 ```
 
 ### Agent Flow
-1. **Research Agent** - Collects trending topics via SERP API
+1. **Research Agent** - Collects trending topics via Tavily search
 2. **Content Agent** - Generates branded social media text using Google Gemini
 3. **Image Prompt Sub-Agent** - Cleans and enhances text into visual prompts
-4. **Image Generation** - Creates images via Pollinations API
+4. **Image Generation** - Creates images via Google Gemini AI
 5. **Social Media Agent** - Posts to Twitter and Facebook with images
 
 ## Setup
@@ -65,12 +65,15 @@ LANGSMITH_WORKSPACE_ID=your_workspace_id
 # AI Models
 GOOGLE_AI_API_KEY=your_google_ai_key
 
-# Composio (for Twitter, Facebook, SERP)
+# Composio (for Twitter, Facebook, Tavily)
 COMPOSIO_API_KEY=your_composio_key
 
 # Social Media Accounts
 FACEBOOK_ACCOUNT_ID=your_facebook_account_id
 FACEBOOK_PAGE_ID=your_facebook_page_id
+INSTAGRAM_ACCOUNT_ID=your_instagram_account_id
+INSTAGRAM_USER_ID=your_instagram_user_id
+GEMINI_ACCOUNT_ID=your_gemini_account_id
 ```
 
 ## Usage
@@ -107,8 +110,8 @@ ai-agent/
 ## API Integrations
 
 - **Google Gemini 2.5 Flash Lite** - Content generation
-- **Pollinations AI** - Image generation (Flux model)
-- **Composio** - Twitter, Facebook, SERP API integration
+- **Google Gemini 2.5 Flash Image Preview** - AI image generation via Composio
+- **Composio** - Twitter, Facebook, Tavily search integration
 - **LangSmith** - Tracing and observability
 
 ## LangSmith Tracing
@@ -130,7 +133,7 @@ Content: "Digital wealth isn't just about managing money; it's about the systems
 ↓
 Image Prompt: "A modern, professional image depicting business automation..."
 ↓
-Image URL: https://image.pollinations.ai/prompt/...
+Image URL: https://s3.amazonaws.com/... (Gemini generated)
 ↓
 Twitter: Posted ✅
 Facebook: Posted ✅ (with image)

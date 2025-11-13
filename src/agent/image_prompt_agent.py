@@ -21,7 +21,7 @@ def enhance_prompt_for_image(text: str) -> str:
         text: Social media post text with hashtags and formatting.
 
     Returns:
-        Clean, descriptive image prompt optimized for Pollinations AI.
+        Clean, descriptive image prompt optimized for Google Gemini AI image generation.
     """
     logger.info("Enhancing image prompt...")
 
