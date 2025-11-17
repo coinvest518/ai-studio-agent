@@ -35,7 +35,7 @@ Short Post: {tweet_text}
 
 Create a LONG-FORM LINKEDIN POST (300-350 words) that expands on this message.
 
-BRAND: FWDA builds custom AI automation workflows for SMBs (coaches, agencies, consultants, trades, wellness, beauty, fitness, local businesses).
+BRAND: Futurist Digital Wealth agency builds custom AI automation workflows for SMBs (coaches, agencies, consultants, trades, wellness, beauty, fitness, local businesses).
 
 REQUIREMENTS:
 - Tone: Thought-leadership, future-focused, plain English

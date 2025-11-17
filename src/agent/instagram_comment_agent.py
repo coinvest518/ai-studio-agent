@@ -30,9 +30,9 @@ def generate_instagram_reply(comment_text: str, commenter_username: str) -> str:
         google_api_key=os.getenv("GOOGLE_AI_API_KEY")
     )
     
-    prompt = f"""You are the customer engagement AI for FWDA AI Automation Agency.
+    prompt = f"""You are the customer engagement AI for Futuristic Digital Wealth Agency.
 
-BRAND: FWDA builds custom AI automation workflows for SMBs.
+BRAND: Futuristic Digital Wealth Agency and AI company designed to help entrepreneurs, small business owners and major companies integrate and improve with AI.
 
 COMMENT from @{commenter_username}: {comment_text}
 

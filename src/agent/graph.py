@@ -21,6 +21,7 @@ from composio import Composio
 from dotenv import load_dotenv
 from langchain_google_genai import GoogleGenerativeAI
 from langsmith import traceable
+from langsmith.integrations.otel import configure
 from langgraph.graph import StateGraph
 from src.agent.linkedin_agent import convert_to_linkedin_post
 from src.agent.instagram_agent import convert_to_instagram_caption
@@ -29,6 +30,9 @@ from src.agent.blog_email_agent import generate_and_send_blog
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure LangSmith OpenTelemetry integration for Google models
+configure(project_name=os.getenv("LANGSMITH_PROJECT", "fdwa-multi-agent"))
 
 # Initialize Composio client
 composio_client = Composio(
@@ -178,13 +182,18 @@ def research_trends_node(state: AgentState) -> dict:
     """
     logger.info("---RESEARCHING TRENDS---")
 
-    # FWDA-specific search queries for SMB AI automation trends
+    # Diverse search queries for different business topics
     search_queries = [
         "AI automation for small business 2025",
-        "AI workflows for service businesses",
-        "AI business systems 2025",
-        "AI agents replacing administrative work",
-        "SMB productivity automation statistics",
+        "no-code app development trends 2025",
+        "digital marketing automation tools",
+        "cryptocurrency business adoption",
+        "fintech solutions for entrepreneurs",
+        "SaaS productivity tools 2025",
+        "e-commerce automation platforms",
+        "remote work technology trends",
+        "business process automation",
+        "startup funding technology 2025",
     ]
 
     query = random.choice(search_queries)
@@ -259,7 +268,7 @@ def generate_tweet_node(state: AgentState) -> dict:
 
     # FWDA Marketing Intelligence prompt
     prompt = f"""
-You are the Marketing Intelligence & Content Strategy AI Agent for FWDA AI Automation Agency.
+You are the Marketing Intelligence & Content Strategy AI Agent for Futuristic Digital Wealth Agency. A start up Tech and AI company Blacked wned and using AI to advance businesses.
 
 BRAND POSITIONING:
 FWDA builds custom AI automation workflows, systems, and client pipelines that reduce workload and increase revenue capacity for small and medium-sized service businesses.
@@ -274,11 +283,11 @@ TASK:
 Extract 2-3 concrete insights (adoption rates, cost savings, productivity improvements, SMB tech urgency) and create a social post.
 
 TWITTER POST REQUIREMENTS (MAX 240 CHARACTERS including spaces, emojis, hashtags, links):
-- Hook: One compelling sentence about SMB AI trend
+- Hook: One compelling sentence about AI trends, small business ai needs and trends, Entrepreneurs and also Credit Repair and Litigation with AI.
 - Problem + Solution: Brief statement of problem and how FWDA solves it
 - Include EXACTLY 2 emojis (placed naturally in text)
 - Include 3-5 hashtags at end
-- Include ONE link: https://fwda.site
+- Include ONE link: https://fdwa.site
 - Tone: Direct, confident, conversational
 - Format: Short, punchy, Twitter-native style
 - Count ALL characters including spaces
@@ -484,7 +493,7 @@ def reply_to_twitter_node(state: AgentState) -> dict:
     time.sleep(60)
     logger.info("Proceeding with reply")
 
-    reply_message = "Learn more about AI automation for your business: https://fwda.site 🚀"
+    reply_message = "Learn more about AI Consulting and Development for your business: https://fdwa.site 🚀"
 
     try:
         reply_response = composio_client.tools.execute(
