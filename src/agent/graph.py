@@ -776,21 +776,34 @@ def post_social_media_node(state: AgentState) -> dict:
                 if local_image_path:
                     media_upload_response = composio_client.tools.execute(
                         "TWITTER_UPLOAD_MEDIA",
-                        {"media": local_image_path},
+                        {
+                            "media": local_image_path,
+                            "media_category": "tweet_image"
+                        },
                         connected_account_id=os.getenv("TWITTER_ACCOUNT_ID")
                     )
                     
                     logger.info("Twitter media upload response: %s", media_upload_response)
                     
                     if media_upload_response.get("successful", False):
-                        # Extract media ID from response (it's in data.id, not data.media_id_string)
+                        # Extract media ID from response - check all possible locations
                         media_data = media_upload_response.get("data", {})
-                        media_id = media_data.get("id") or media_data.get("media_id_string") or media_data.get("media_key")
-                        if media_id:
-                            twitter_params["media_media_ids"] = [media_id]
+                        
+                        # Try different response formats
+                        media_id = (
+                            media_data.get("media_id_string") or 
+                            media_data.get("media_id") or 
+                            media_data.get("id") or 
+                            media_data.get("media_key") or
+                            str(media_data.get("media_id_string", "")) or
+                            str(media_data) if isinstance(media_data, (int, str)) else None
+                        )
+                        
+                        if media_id and str(media_id) != "{}" and str(media_id) != "None":
+                            twitter_params["media_media_ids"] = [str(media_id)]
                             logger.info("Twitter media uploaded successfully, ID: %s", media_id)
                         else:
-                            logger.warning("No media ID returned from Twitter upload")
+                            logger.warning("No media ID returned from Twitter upload. Full response: %s", media_upload_response)
                     else:
                         logger.error("Twitter media upload failed: %s", media_upload_response.get("error"))
                 else:
