@@ -27,52 +27,52 @@ TEMPLATE_AI_BUSINESS = """<h1>{title}</h1>
 
 <p>{intro_paragraph}</p>
 
-<h2>Why AI Is Transforming Business Operations</h2>
-<p>Smart entrepreneurs are leveraging AI automation to:</p>
+<h2>Why Strategic Consulting Transforms Business Operations</h2>
+<p>Smart entrepreneurs are leveraging expert consulting to:</p>
 <ul>
-  <li>Eliminate repetitive manual tasks</li>
-  <li>Scale operations without hiring more staff</li>
-  <li>Improve customer experience through automation</li>
-  <li>Generate more revenue with less effort</li>
+  <li>Eliminate inefficient processes</li>
+  <li>Scale operations without unnecessary costs</li>
+  <li>Improve customer experience through better strategies</li>
+  <li>Generate more revenue with optimized approaches</li>
 </ul>
 
-<h2>Essential Tools for AI-Powered Business Growth</h2>
-<p>Here are the game-changing tools successful entrepreneurs are using:</p>
+<h2>Essential Tools for Business Growth</h2>
+<p>Here are the game-changing tools successful businesses are using:</p>
 <ul>
   <li><strong>Website & Hosting:</strong> <a href="{affiliate_hostinger}" target="_blank">Hostinger</a> - Professional hosting that scales with your business</li>
-  <li><strong>AI App Development:</strong> <a href="{affiliate_lovable}" target="_blank">Lovable</a> - Build apps without coding</li>
+  <li><strong>Business Development:</strong> <a href="{affiliate_lovable}" target="_blank">Lovable</a> - Build solutions without coding</li>
   <li><strong>Business Communication:</strong> <a href="{affiliate_openphone}" target="_blank">OpenPhone</a> - Professional phone system</li>
   <li><strong>Content Creation:</strong> <a href="{affiliate_veed}" target="_blank">Veed</a> - AI video editing made simple</li>
-  <li><strong>Voice AI:</strong> <a href="{affiliate_elevenlabs}" target="_blank">ElevenLabs</a> - Professional AI voice generation</li>
+  <li><strong>Voice Solutions:</strong> <a href="{affiliate_elevenlabs}" target="_blank">ElevenLabs</a> - Professional AI voice generation</li>
 </ul>
 
 <h2>{main_content_header}</h2>
 <p>{main_content}</p>
 
-<h2>Start Your AI Transformation Today</h2>
-<p>The businesses that adopt AI automation now will dominate their markets tomorrow. Don't wait - your competitors are already getting ahead.</p>
+<h2>Start Your Business Transformation Today</h2>
+<p>The businesses that adopt strategic consulting now will dominate their markets tomorrow. Don't wait - your competitors are already getting ahead.</p>
 
-<p><strong>Ready to scale your business with AI?</strong> Visit <a href="https://fdwa.site" target="_blank">FDWA</a> for expert AI consulting and implementation.</p>
+<p><strong>Ready to scale your business?</strong> Visit <a href="https://fdwa.site" target="_blank">FDWA</a> for expert AI consulting and implementation.</p>
 
-<p><em>Transform your business operations, increase efficiency, and unlock new revenue streams with proven AI strategies.</em></p>
+<p><em>Transform your business operations, increase efficiency, and unlock new revenue streams with proven strategies.</em></p>
 
-Labels: ai, automation, business, entrepreneurship, fdwa, scaling"""
+Labels: business, consulting, growth, entrepreneurship, scaling"""
 
 TEMPLATE_MARKETING = """<h1>{title}</h1>
 
 <p>{intro_paragraph}</p>
 
-<h2>The Digital Marketing Revolution</h2>
-<p>Modern businesses are winning with smart digital strategies:</p>
+<h2>The Strategic Marketing Revolution</h2>
+<p>Modern businesses are winning with smart strategic approaches:</p>
 <ul>
   <li>Automated customer acquisition systems</li>
-  <li>AI-powered content creation workflows</li>
-  <li>Data-driven decision making</li>
+  <li>Data-driven content creation workflows</li>
+  <li>Analytics-based decision making</li>
   <li>Scalable marketing automation</li>
 </ul>
 
-<h2>Must-Have Tools for Digital Growth</h2>
-<p>Build your marketing stack with these proven tools:</p>
+<h2>Must-Have Tools for Business Growth</h2>
+<p>Build your business stack with these proven tools:</p>
 <ul>
   <li><strong>Chatbot Automation:</strong> <a href="{affiliate_manychat}" target="_blank">ManyChat</a> - Engage customers 24/7</li>
   <li><strong>Workflow Automation:</strong> <a href="{affiliate_n8n}" target="_blank">n8n</a> - Connect all your business tools</li>
@@ -84,30 +84,29 @@ TEMPLATE_MARKETING = """<h1>{title}</h1>
 <h2>{main_content_header}</h2>
 <p>{main_content}</p>
 
-<h2>Scale Your Marketing Impact</h2>
-<p>Stop competing on price and start competing on value. Smart marketing automation lets you deliver personalized experiences at scale.</p>
+<h2>Scale Your Business Impact</h2>
+<p>Stop competing on price and start competing on value. Smart strategies let you deliver personalized experiences at scale.</p>
 
-<p>Get professional marketing strategy and implementation at <a href="https://fdwa.site" target="_blank">FDWA</a>.</p>
+<p>Get professional business strategy and implementation at <a href="https://fdwa.site" target="_blank">FDWA</a>.</p>
 
-Labels: marketing, automation, growth, digital, fdwa, strategy"""
+Labels: marketing, strategy, growth, business, consulting"""
 
 TEMPLATE_FINANCIAL = """<h1>{title}</h1>
 
 <p>{intro_paragraph}</p>
 
-<h2>Building Wealth in the Digital Age</h2>
-<p>Smart investors and entrepreneurs are diversifying with:</p>
+<h2>Building Financial Success in Business</h2>
+<p>Smart entrepreneurs are diversifying with:</p>
 <ul>
-  <li>Cryptocurrency and digital assets</li>
+  <li>Strategic financial planning</li>
   <li>Automated investment strategies</li>
-  <li>Digital product revenue streams</li>
+  <li>Revenue stream optimization</li>
   <li>Technology-driven business models</li>
 </ul>
 
 <h2>Financial Tools for Modern Entrepreneurs</h2>
 <p>Maximize your earning potential with these platforms:</p>
 <ul>
-  <li><strong>Crypto Rewards:</strong> <a href="{affiliate_cointiply}" target="_blank">Cointiply</a> - Earn cryptocurrency daily</li>
   <li><strong>Financial Management:</strong> <a href="{affiliate_ava}" target="_blank">Ava</a> - Smart money management</li>
   <li><strong>Digital Products:</strong> <a href="{affiliate_theleap}" target="_blank">The Leap</a> - Create and sell digital products</li>
   <li><strong>E-commerce:</strong> <a href="{affiliate_amazon}" target="_blank">Amazon</a> - Everything for your business</li>
@@ -118,11 +117,11 @@ TEMPLATE_FINANCIAL = """<h1>{title}</h1>
 <p>{main_content}</p>
 
 <h2>Your Financial Future Starts Now</h2>
-<p>The wealth gap is widening between those who embrace technology and those who don't. Which side will you be on?</p>
+<p>The wealth gap is widening between those who embrace strategy and those who don't. Which side will you be on?</p>
 
-<p>Learn advanced wealth-building strategies at <a href="https://fdwa.site" target="_blank">FDWA</a>.</p>
+<p>Learn advanced financial strategies at <a href="https://fdwa.site" target="_blank">FDWA</a>.</p>
 
-Labels: finance, cryptocurrency, wealth, digital, fdwa, investment"""
+Labels: finance, strategy, wealth, business, consulting"""
 
 TEMPLATE_GENERAL = """<h1>{title}</h1>
 
@@ -178,11 +177,11 @@ def get_template_by_topic(topic: str) -> str:
     """Select appropriate template based on topic keywords."""
     topic_lower = topic.lower()
     
-    if any(word in topic_lower for word in ['ai', 'automation', 'artificial', 'machine learning']):
+    if any(word in topic_lower for word in ['ai', 'automation', 'artificial', 'machine learning', 'tech', 'productivity']):
         return TEMPLATE_AI_BUSINESS
-    elif any(word in topic_lower for word in ['marketing', 'social', 'growth', 'digital']):
+    elif any(word in topic_lower for word in ['marketing', 'social', 'growth', 'digital', 'sales', 'advertising']):
         return TEMPLATE_MARKETING
-    elif any(word in topic_lower for word in ['finance', 'crypto', 'money', 'wealth', 'investment']):
+    elif any(word in topic_lower for word in ['finance', 'crypto', 'money', 'wealth', 'investment', 'financial']):
         return TEMPLATE_FINANCIAL
     else:
         return TEMPLATE_GENERAL
@@ -193,14 +192,14 @@ def generate_blog_content(trend_data: str) -> Dict[str, Any]:
     logger.info("---GENERATING BLOG CONTENT---")
 
     # Use predefined content based on trend data keywords
-    topic = "ai"  # Default to AI topic
+    topic = "general"  # Default to general topic for diversity
     if trend_data:
         topic_lower = trend_data.lower()
-        if any(word in topic_lower for word in ['marketing', 'social', 'growth', 'digital']):
+        if any(word in topic_lower for word in ['marketing', 'social', 'growth', 'digital', 'sales', 'product']):
             topic = "marketing"
-        elif any(word in topic_lower for word in ['finance', 'crypto', 'money', 'wealth']):
+        elif any(word in topic_lower for word in ['finance', 'crypto', 'money', 'wealth', 'investment', 'credit', 'repair']):
             topic = "finance"
-        elif any(word in topic_lower for word in ['ai', 'automation', 'artificial']):
+        elif any(word in topic_lower for word in ['ai', 'automation', 'artificial', 'tech', 'productivity', 'dispute']):
             topic = "ai"
         else:
             topic = "general"
@@ -208,28 +207,28 @@ def generate_blog_content(trend_data: str) -> Dict[str, Any]:
     # Predefined content based on topic
     content_map = {
         "ai": {
-            "title": "AI Automation Transforms Small Business Operations",
-            "intro_paragraph": "Smart entrepreneurs are discovering that AI automation isn't just for tech giants anymore. Small and medium businesses are leveraging intelligent workflows to eliminate manual tasks, reduce operational costs, and scale their operations without hiring additional staff.",
-            "main_content_header": "The ROI of AI Automation",
-            "main_content": "Businesses implementing AI automation report average time savings of 15+ hours per week and revenue increases of 40% within the first year. From automated customer service to intelligent lead qualification, AI systems work 24/7 to grow your business while you focus on strategy and growth."
+            "title": "AI Automation for Credit Repair and Business Success",
+            "intro_paragraph": "Smart entrepreneurs are using AI to fix credit issues and automate their businesses. From dispute letter generators to report analyzers, AI tools are revolutionizing how people build wealth and streamline operations.",
+            "main_content_header": "Why AI Beats Traditional Methods",
+            "main_content": "People using AI for credit repair see results in weeks, not months. Automated dispute systems work 24/7, generating letters that get denials overturned. Business automation saves 20+ hours per week while increasing revenue through passive income streams."
         },
         "marketing": {
-            "title": "Digital Marketing Automation for Small Businesses",
-            "intro_paragraph": "Modern small businesses are winning the competition through smart digital marketing automation. By implementing intelligent workflows, businesses can engage customers 24/7, nurture leads automatically, and scale their marketing efforts without increasing their team size.",
-            "main_content_header": "Marketing Automation Success Stories",
-            "main_content": "Companies using marketing automation see 451% increase in qualified leads and 34% faster sales cycles. From automated email sequences to intelligent chatbots, these tools help small businesses compete with larger competitors while maintaining personal customer relationships."
+            "title": "Digital Product Marketing: Sell Ebooks and Guides Online",
+            "intro_paragraph": "Modern entrepreneurs are building passive income by creating and selling digital products. From credit repair guides to business automation templates, digital products provide freedom and financial security.",
+            "main_content_header": "Digital Product Success Stories",
+            "main_content": "Creators selling digital products report 300% ROI within the first year. From step-by-step guides to automation templates, these products sell themselves once set up. AI helps create content faster and market it effectively."
         },
         "finance": {
-            "title": "Financial Technology for Modern Entrepreneurs",
-            "intro_paragraph": "Today's entrepreneurs are leveraging financial technology to build wealth and streamline business operations. From cryptocurrency integration to automated invoicing, smart financial tools are helping small businesses optimize cash flow and explore new revenue streams.",
-            "main_content_header": "FinTech ROI for Small Business",
-            "main_content": "Businesses using modern financial tools report 25% faster payment processing and 60% reduction in administrative overhead. Automated bookkeeping, digital payment systems, and investment platforms are democratizing financial management for entrepreneurs of all sizes."
+            "title": "Credit Repair Hacks and Financial Empowerment",
+            "intro_paragraph": "Financial freedom starts with fixing your credit and building wealth strategically. From dispute letters to investment automation, smart people are using proven methods to improve their financial future.",
+            "main_content_header": "Credit Repair That Works",
+            "main_content": "Successful credit repair involves knowing the laws and using the right tools. AI dispute writers create perfect letters that get results. Combined with passive income strategies, this creates true financial empowerment."
         },
         "general": {
-            "title": "Business Productivity Tools for Entrepreneurs",
-            "intro_paragraph": "Successful entrepreneurs understand that productivity isn't about working harder—it's about working smarter. Modern business tools and automation systems help small business owners focus on growth while technology handles routine operations.",
-            "main_content_header": "Essential Productivity Systems",
-            "main_content": "High-performing businesses use integrated tool stacks that automate workflows, manage customer relationships, and streamline operations. These systems typically deliver 300% ROI within the first year through time savings and improved efficiency."
+            "title": "Building Wealth with AI and Digital Products",
+            "intro_paragraph": "The future belongs to those who embrace technology for financial success. From credit repair automation to passive income creation, AI tools are democratizing wealth building for everyone.",
+            "main_content_header": "Your Path to Financial Freedom",
+            "main_content": "High-performing individuals use integrated tech stacks for credit repair, business automation, and wealth building. These systems deliver results through time savings, increased efficiency, and passive income generation."
         }
     }
     
