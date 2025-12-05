@@ -1,20 +1,15 @@
 """Blog Email Agent for FDWA AI Automation Agency.
 
 This agent generates blog content using predefined templates and sends it via Gmail.
+Image URLs are embedded directly in the HTML body for display.
 """
 
-import base64
 import hashlib
 import json
 import logging
 import os
 import random
-import requests
-import smtplib
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 from pathlib import Path
 from typing import Dict, Any, Optional
 from composio import Composio
@@ -437,11 +432,13 @@ def generate_blog_content(trend_data: str, image_path: Optional[str] = None) -> 
         
         template = get_template_by_topic(topic)
 
-        # Add image placeholder for CID reference (will be replaced with embedded image)
+        # Add image using direct URL (not CID - Composio doesn't support MIME attachments)
         image_html = ""
-        if image_path or os.environ.get("BLOG_IMAGE_PATH") or os.environ.get("BLOG_IMAGE_URL"):
-            # Use CID reference for embedded image in email
-            image_html = '<img src="cid:blog_image" alt="Blog Image" style="max-width:100%;border-radius:12px;margin-bottom:20px;" />\n'
+        image_url = image_path or os.environ.get("BLOG_IMAGE_URL")
+        if image_url and image_url.startswith(('http://', 'https://')):
+            # Use the actual image URL directly in the HTML
+            image_html = f'<img src="{image_url}" alt="Blog Image" style="max-width:100%;border-radius:12px;margin-bottom:20px;display:block;" />\n'
+            logger.info("Adding image URL to blog HTML: %s", image_url[:60])
 
         # Fill in the template
         blog_html = image_html + template.format(
@@ -457,7 +454,8 @@ def generate_blog_content(trend_data: str, image_path: Optional[str] = None) -> 
             "blog_html": blog_html,
             "title": selected_content["title"],
             "topic": topic,
-            "intro_paragraph": selected_content["intro_paragraph"]
+            "intro_paragraph": selected_content["intro_paragraph"],
+            "image_url": image_url  # Return image URL for reference
         }
 
     except Exception as e:
@@ -465,55 +463,13 @@ def generate_blog_content(trend_data: str, image_path: Optional[str] = None) -> 
         return {"error": str(e)}
 
 
-def _download_image(image_source: str) -> Optional[bytes]:
-    """Download image from URL or read from local path.
+def send_blog_email(blog_html: str, title: str, image_url: Optional[str] = None) -> Dict[str, Any]:
+    """Send blog content via Gmail with image URL in HTML body.
     
     Args:
-        image_source: URL or local file path of the image.
-        
-    Returns:
-        Image bytes or None if failed.
-    """
-    try:
-        if image_source.startswith(('http://', 'https://')):
-            # Download from URL
-            response = requests.get(image_source, timeout=30)
-            response.raise_for_status()
-            logger.info("Downloaded image from URL: %s", image_source[:50])
-            return response.content
-        elif os.path.exists(image_source):
-            # Read from local file
-            with open(image_source, 'rb') as f:
-                logger.info("Read image from local path: %s", image_source)
-                return f.read()
-        else:
-            logger.warning("Image source not found: %s", image_source)
-            return None
-    except Exception as e:
-        logger.error("Failed to get image: %s", e)
-        return None
-
-
-def _get_image_mime_type(image_path: str) -> str:
-    """Determine MIME type from file extension."""
-    ext = image_path.lower().split('.')[-1] if '.' in image_path else 'jpeg'
-    mime_map = {
-        'jpg': 'jpeg',
-        'jpeg': 'jpeg',
-        'png': 'png',
-        'gif': 'gif',
-        'webp': 'webp'
-    }
-    return mime_map.get(ext, 'jpeg')
-
-
-def send_blog_email(blog_html: str, title: str, image_path: Optional[str] = None) -> Dict[str, Any]:
-    """Send blog content via Gmail with optional embedded image.
-    
-    Args:
-        blog_html: HTML content of the blog post.
+        blog_html: HTML content of the blog post (image URL already embedded).
         title: Subject/title of the email.
-        image_path: Optional path or URL to image to embed.
+        image_url: Optional image URL (for logging/reference only, already in HTML).
         
     Returns:
         Dictionary with email status.
@@ -523,65 +479,22 @@ def send_blog_email(blog_html: str, title: str, image_path: Optional[str] = None
     try:
         blogger_email = os.getenv("BLOGGER_EMAIL", "mildhighent.moneyovereverything@blogger.com")
         
-        # Get image from various sources
-        image_source = image_path or os.environ.get("BLOG_IMAGE_PATH") or os.environ.get("BLOG_IMAGE_URL")
-        image_data = None
-        
-        if image_source:
-            image_data = _download_image(image_source)
-            if image_data:
-                logger.info("Image loaded successfully (%d bytes)", len(image_data))
-        
-        # If we have image data, we need to create a proper MIME message with embedded image
-        if image_data:
-            logger.info("Sending email with embedded image attachment")
-            
-            # Create multipart/related message for inline images
-            msg = MIMEMultipart('related')
-            msg['Subject'] = title
-            msg['To'] = blogger_email
-            
-            # Create the HTML part with CID reference
-            html_part = MIMEText(blog_html, 'html')
-            
-            # Create alternative container to hold HTML
-            msg_alternative = MIMEMultipart('alternative')
-            msg_alternative.attach(html_part)
-            msg.attach(msg_alternative)
-            
-            # Attach the image with Content-ID
-            mime_type = _get_image_mime_type(image_source)
-            img = MIMEImage(image_data, _subtype=mime_type)
-            img.add_header('Content-ID', '<blog_image>')
-            img.add_header('Content-Disposition', 'inline', filename='blog_image.jpg')
-            msg.attach(img)
-            
-            # Convert to raw base64 for Gmail API
-            raw_message = base64.urlsafe_b64encode(msg.as_bytes()).decode('utf-8')
-            
-            # Send via Gmail API with raw message
-            email_params = {
-                "recipient_email": blogger_email,
-                "subject": title,
-                "body": blog_html,
-                "is_html": True,
-                "user_id": "me",
-                "raw": raw_message  # Include raw MIME message if API supports it
-            }
+        # Check if image URL is in the HTML
+        has_image = image_url and image_url in blog_html
+        if has_image:
+            logger.info("Email HTML contains image URL: %s", image_url[:60] if image_url else "None")
         else:
-            logger.info("Sending email without image (no image available)")
-            # Remove CID reference if no image available
-            blog_html = blog_html.replace('<img src="cid:blog_image" alt="Blog Image" style="max-width:100%;border-radius:12px;margin-bottom:20px;" />\n', '')
-            
-            email_params = {
-                "recipient_email": blogger_email,
-                "subject": title,
-                "body": blog_html,
-                "is_html": True,
-                "user_id": "me"
-            }
+            logger.info("Email HTML does not contain an image")
         
-        # Send email using Composio Gmail
+        # Send email using Composio Gmail - image URL is already in the HTML body
+        email_params = {
+            "recipient_email": blogger_email,
+            "subject": title,
+            "body": blog_html,
+            "is_html": True,
+            "user_id": "me"
+        }
+        
         email_response = composio_client.tools.execute(
             "GMAIL_SEND_EMAIL",
             email_params,
@@ -595,36 +508,9 @@ def send_blog_email(blog_html: str, title: str, image_path: Optional[str] = None
             return {
                 "email_status": "Sent successfully", 
                 "recipient": blogger_email,
-                "has_image": image_data is not None
+                "has_image": has_image
             }
         else:
-            # If raw message failed, try fallback with image URL in HTML
-            if image_data and image_source and image_source.startswith('http'):
-                logger.info("Raw message failed, trying fallback with image URL")
-                blog_html_with_url = blog_html.replace(
-                    'src="cid:blog_image"', 
-                    f'src="{image_source}"'
-                )
-                fallback_params = {
-                    "recipient_email": blogger_email,
-                    "subject": title,
-                    "body": blog_html_with_url,
-                    "is_html": True,
-                    "user_id": "me"
-                }
-                fallback_response = composio_client.tools.execute(
-                    "GMAIL_SEND_EMAIL",
-                    fallback_params,
-                    connected_account_id=os.getenv("GMAIL_CONNECTED_ACCOUNT_ID")
-                )
-                if fallback_response.get("successful", False):
-                    logger.info("Fallback email with URL sent successfully!")
-                    return {
-                        "email_status": "Sent successfully (image linked)", 
-                        "recipient": blogger_email,
-                        "has_image": True
-                    }
-            
             error_msg = email_response.get("error", "Unknown error")
             logger.error("Gmail send failed: %s", error_msg)
             return {"email_status": f"Failed: {error_msg}"}
@@ -634,20 +520,23 @@ def send_blog_email(blog_html: str, title: str, image_path: Optional[str] = None
         return {"email_status": f"Failed: {str(e)}"}
 
 
-def generate_and_send_blog(trend_data: str = None, image_path: Optional[str] = None) -> Dict[str, Any]:
+def generate_and_send_blog(trend_data: str = None, image_url: Optional[str] = None) -> Dict[str, Any]:
     """Main function to generate blog content and send via email.
     
     Args:
         trend_data: Trend data to use for content generation.
-        image_path: Optional path or URL to image to include.
+        image_url: Optional URL of image to include in the blog.
         
     Returns:
         Dictionary with blog and email status.
     """
     logger.info("Starting blog generation and email process...")
     
-    # Get image path from various sources
-    image_source = image_path or os.environ.get("BLOG_IMAGE_PATH") or os.environ.get("BLOG_IMAGE_URL")
+    # Get image URL from various sources (must be a URL, not local path)
+    image_source = image_url or os.environ.get("BLOG_IMAGE_URL")
+    
+    if image_source:
+        logger.info("Image URL for blog: %s", image_source[:60] if image_source else "None")
     
     # Always require trend_data for unique blog content
     if not trend_data or not trend_data.strip():
@@ -663,17 +552,17 @@ def generate_and_send_blog(trend_data: str = None, image_path: Optional[str] = N
         ]
         trend_data = random.choice(fallback_trends)
 
-    # Generate blog content
+    # Generate blog content with image URL embedded in HTML
     blog_result = generate_blog_content(trend_data, image_path=image_source)
 
     if "error" in blog_result:
         return blog_result
 
-    # Send email with image
+    # Send email - image URL is already in the HTML body
     email_result = send_blog_email(
         blog_result["blog_html"], 
         blog_result["title"],
-        image_path=image_source
+        image_url=blog_result.get("image_url")  # Pass for logging
     )
 
     # Record the sent post to prevent future duplicates
@@ -692,5 +581,6 @@ def generate_and_send_blog(trend_data: str = None, image_path: Optional[str] = N
         "email_status": email_result["email_status"],
         "recipient": email_result.get("recipient", ""),
         "has_image": email_result.get("has_image", False),
+        "image_url": blog_result.get("image_url", ""),
         "blog_html_preview": blog_result["blog_html"][:200] + "..."
     }
